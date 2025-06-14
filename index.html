@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miss.LuoEasy‘s Game</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <button class="sound-toggle" id="soundToggle">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            <h1><i class="fas fa-puzzle-piece"></i> Awesome华容道</h1>
+            <div class="subtitle">数字与图片，双重挑战！</div>
+        </div>
+
+        <!-- 主菜单 -->
+        <div class="menu-screen" id="menuScreen">
+            <button class="menu-btn" onclick="showClassicDifficultySelect()">
+                <i class="fas fa-play"></i> 经典模式
+            </button>
+            <button class="menu-btn" onclick="showImageSelectScreen()">
+                <i class="fas fa-image"></i> 图片模式
+            </button>
+            <button class="menu-btn" onclick="showChallengeScreen()">
+                <i class="fas fa-trophy"></i> 闯关模式
+            </button>
+            <!-- NEW: 传统模式按钮 -->
+            <button class="menu-btn" onclick="startTraditionalMode()">
+                <i class="fas fa-chess-board"></i> 传统模式
+            </button>
+            <button class="menu-btn" onclick="showInstructions()">
+                <i class="fas fa-question-circle"></i> 游戏说明(重要必看)
+            </button>
+        </div>
+
+        <!-- 图片选择界面 (内容未变) -->
+        <div class="image-select-screen" id="imageSelectScreen">
+             <h2>选择一张图片</h2>
+            <div class="image-options-container">
+                <div class="image-option" onclick="selectImageAndProceed('images/fox.png')">
+                    <img src="images/fox.png" alt="狐狸">
+                </div>
+                <div class="image-option" onclick="selectImageAndProceed('images/hr.png')">
+                    <img src="images/hr.png" alt="瞰山河">
+                </div>
+                <div class="image-option" onclick="selectImageAndProceed('images/Qhaoke.jpg')">
+                    <img src="images/Qhaoke.jpg" alt="小浩克">
+                </div>
+                <div class="image-option" onclick="selectImageAndProceed('images/hen.png')">
+                    <img src="images/hen.png" alt="小鸡">
+                </div>
+            </div>
+            <label for="imageUpload" class="upload-label"><i class="fas fa-upload"></i> 上传自定义图片</label>
+            <input type="file" id="imageUpload" accept="image/jpeg, image/png">
+            <button class="control-btn secondary" onclick="showMenu()" style="margin-top: 20px; width: 100%;"><i class="fas fa-arrow-left"></i> 返回</button>
+        </div>
+
+        <!-- 难度选择界面 (内容未变) -->
+        <div class="difficulty-select" id="difficultySelect">
+            <h2>选择难度</h2>
+            <button class="difficulty-btn" onclick="startGame(3)"><i class="fas fa-seedling"></i> 入门 (3×3)</button>
+            <button class="difficulty-btn" onclick="startGame(4)"><i class="fas fa-fire"></i> 经典 (4×4)</button>
+            <button class="difficulty-btn" onclick="startGame(5)"><i class="fas fa-crown"></i> 挑战 (5×5)</button>
+            <button class="control-btn secondary" onclick="showMenu()" style="margin-top: 20px;"><i class="fas fa-arrow-left"></i> 返回</button>
+        </div>
+        
+        <!-- 闯关模式选择界面 (内容未变) -->
+        <div class="challenge-screen" id="challengeScreen">
+            <h2>选择关卡</h2>
+            <button class="challenge-btn" id="levelBtn1" onclick="startChallenge(1)"><div class="level-info"><h3>第一关</h3><span><i class="fas fa-th-large"></i> 3×3</span><span><i class="fas fa-clock"></i> 3:00</span></div><div class="lock-icon"><i class="fas fa-lock"></i></div></button>
+            <button class="challenge-btn" id="levelBtn2" onclick="startChallenge(2)"><div class="level-info"><h3>第二关</h3><span><i class="fas fa-th"></i> 4×4</span><span><i class="fas fa-clock"></i> 8:00</span></div><div class="lock-icon"><i class="fas fa-lock"></i></div></button>
+            <button class="challenge-btn" id="levelBtn3" onclick="startChallenge(3)"><div class="level-info"><h3>第三关</h3><span><i class="fas fa-border-all"></i> 5×5</span><span><i class="fas fa-clock"></i> 15:00</span></div><div class="lock-icon"><i class="fas fa-lock"></i></div></button>
+            <button class="control-btn secondary" onclick="showMenu()" style="margin-top: 20px; width:100%"><i class="fas fa-arrow-left"></i> 返回菜单</button>
+        </div>
+
+        <!-- 数字/图片游戏界面 (内容未变) -->
+        <div class="game-screen" id="gameScreen">
+            <div class="game-info"><div class="info-item"><div class="label">难度/关卡</div><div class="value" id="difficultyDisplay">4×4</div></div><div class="info-item"><div class="label">步数</div><div class="value" id="moveCount">0</div></div><div class="info-item"><div class="label">时间</div><div class="value" id="timeDisplay">00:00</div></div></div>
+            <div class="puzzle-board" id="puzzleBoard"></div>
+            <div class="game-controls"><button class="control-btn secondary" onclick="showMenu()"><i class="fas fa-home"></i> 菜单</button><button class="control-btn primary" onclick="restartGame()"><i class="fas fa-redo"></i> 重新开始</button><button class="control-btn danger" onclick="showHint()"><i class="fas fa-lightbulb"></i> 提示</button></div>
+        </div>
+        
+        <!-- NEW: 传统模式游戏界面 -->
+        <div class="traditional-screen" id="traditionalScreen">
+            <div class="game-info">
+                <div class="info-item"><div class="label">游戏说明</div><div class="value">放曹哥一马，胜造七级浮屠👇从正下方</div></div>
+                <div class="info-item"><div class="label">步数</div><div class="value" id="klotskiMoveCount">0</div></div>
+            </div>
+            <div class="traditional-board-container">
+                <div class="traditional-board" id="klotskiBoard">
+                    <!-- 传统华容道棋子将在这里生成 -->
+                </div>
+                <div class="traditional-board-exit"></div>
+            </div>
+             <div class="game-controls">
+                <button class="control-btn secondary" onclick="showMenu()"><i class="fas fa-home"></i> 菜单</button>
+                <button class="control-btn primary" onclick="restartGame()"><i class="fas fa-redo"></i> 重新开始</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 弹窗 (内容微调以适应所有模式) -->
+    <div class="modal" id="winModal">
+        <div class="modal-content">
+            <div class="celebration" id="celebration"></div>
+            <h2 id="winTitle"><i class="fas fa-trophy"></i> 恭喜你！</h2>
+            <p id="winSubtitle">你成功完成了挑战！</p>
+            <p id="winStats"></p>
+            <p id="winMessage"></p>
+            <button class="modal-btn primary" id="nextChallengeBtn" onclick="nextChallenge()">下一关</button>
+            <button class="modal-btn secondary" onclick="closeWinModal()">返回菜单</button>
+        </div>
+    </div>
+    <div class="modal" id="failModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-times-circle"></i> 挑战失败</h2>
+            <p>时间到了！再试一次吧！</p>
+            <button class="modal-btn primary" onclick="restartGame()">再试一次</button>
+            <button class="modal-btn secondary" onclick="closeFailModal()">返回菜单</button>
+        </div>
+    </div>
+    <div class="modal" id="messageModal">
+         <div class="modal-content">
+            <h2 id="messageTitle">提示</h2>
+            <p id="messageText"></p>
+            <button class="modal-btn primary" onclick="closeMessageModal()">知道了</button>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
