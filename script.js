@@ -124,10 +124,25 @@ class KlotskiGame {
         this.draggedElement.style.transform = `translate(${dx}px, ${dy}px)`;
     }
 
+    isPositionOccupied(x, y, w, h, ignoredPieceId) {
+        if (x < 0 || y < 0 || x + w > this.boardWidth || y + h > this.boardHeight) {
+            return true;
+        }
+        for (const other of this.pieces) {
+            if (other.id === ignoredPieceId) continue;
+            if (x < other.x + other.w && x + w > other.x &&
+                y < other.y + other.h && y + h > other.y) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     onDragEnd(e) {
         if (!this.draggedPiece) return;
         e.preventDefault();
-
+        
+        const piece = this.draggedPiece;
         const cellWidth = this.boardElement.clientWidth / this.boardWidth;
         const cellHeight = this.boardElement.clientHeight / this.boardHeight;
         
@@ -138,13 +153,33 @@ class KlotskiGame {
         const gridDeltaX = Math.round(finalDx / cellWidth);
         const gridDeltaY = Math.round(finalDy / cellHeight);
 
-        const newGridX = this.initialPieceX + gridDeltaX;
-        const newGridY = this.initialPieceY + gridDeltaY;
+        let finalGridX = this.initialPieceX;
+        let finalGridY = this.initialPieceY;
 
-        this.draggedPiece.x = newGridX;
-        this.draggedPiece.y = newGridY;
+        if (this.dragAxis === 'horizontal' && gridDeltaX !== 0) {
+            const step = Math.sign(gridDeltaX);
+            for (let i = 1; i <= Math.abs(gridDeltaX); i++) {
+                const nextX = this.initialPieceX + i * step;
+                if (this.isPositionOccupied(nextX, this.initialPieceY, piece.w, piece.h, piece.id)) {
+                    break;
+                }
+                finalGridX = nextX;
+            }
+        } else if (this.dragAxis === 'vertical' && gridDeltaY !== 0) {
+            const step = Math.sign(gridDeltaY);
+            for (let i = 1; i <= Math.abs(gridDeltaY); i++) {
+                const nextY = this.initialPieceY + i * step;
+                if (this.isPositionOccupied(this.initialPieceX, nextY, piece.w, piece.h, piece.id)) {
+                    break;
+                }
+                finalGridY = nextY;
+            }
+        }
 
-        if (newGridX !== this.initialPieceX || newGridY !== this.initialPieceY) {
+        piece.x = finalGridX;
+        piece.y = finalGridY;
+
+        if (finalGridX !== this.initialPieceX || finalGridY !== this.initialPieceY) {
             this.moves++;
             this.updateMoveCount();
             slidingPuzzleGame.playSound('move');
@@ -153,7 +188,6 @@ class KlotskiGame {
             }
         }
 
-        // Cleanup
         this.draggedElement.classList.remove('selected');
         this.draggedElement.style.zIndex = '';
         this.draggedElement.style.transform = '';
@@ -167,51 +201,55 @@ class KlotskiGame {
         this.renderBoard();
     }
 
+    // --- MODIFIED: getDragBounds with correct logic ---
     getDragBounds() {
         const piece = this.draggedPiece;
+        // This check is important because clientWidth/clientHeight can be 0 if the element is not visible
+        if (!this.boardElement.clientWidth || !this.boardElement.clientHeight) {
+            return { min: 0, max: 0 };
+        }
         const cellWidth = this.boardElement.clientWidth / this.boardWidth;
         const cellHeight = this.boardElement.clientHeight / this.boardHeight;
 
-        let minBound = -Infinity;
-        let maxBound = Infinity;
+        let minPixelBound = -Infinity;
+        let maxPixelBound = Infinity;
 
         if (this.dragAxis === 'horizontal') {
-            let leftObstacleX = -1;
-            let rightObstacleX = this.boardWidth;
+            let leftEdgeBoundary = 0;
+            let rightEdgeBoundary = this.boardWidth;
 
             for (const other of this.pieces) {
                 if (other.id === piece.id) continue;
-                // Check if other piece is in the same row(s)
                 if (other.y < piece.y + piece.h && other.y + other.h > piece.y) {
                     if (other.x < piece.x) { // Obstacle to the left
-                        leftObstacleX = Math.max(leftObstacleX, other.x);
+                        leftEdgeBoundary = Math.max(leftEdgeBoundary, other.x + other.w);
                     } else { // Obstacle to the right
-                        rightObstacleX = Math.min(rightObstacleX, other.x);
+                        rightEdgeBoundary = Math.min(rightEdgeBoundary, other.x);
                     }
                 }
             }
-            minBound = (leftObstacleX - this.initialPieceX + 1) * cellWidth;
-            maxBound = (rightObstacleX - (this.initialPieceX + piece.w)) * cellWidth;
+            minPixelBound = (leftEdgeBoundary - piece.x) * cellWidth;
+            maxPixelBound = (rightEdgeBoundary - (piece.x + piece.w)) * cellWidth;
+
         } else if (this.dragAxis === 'vertical') {
-            let topObstacleY = -1;
-            let bottomObstacleY = this.boardHeight;
+            let topEdgeBoundary = 0;
+            let bottomEdgeBoundary = this.boardHeight;
 
             for (const other of this.pieces) {
                 if (other.id === piece.id) continue;
-                // Check if other piece is in the same column(s)
                 if (other.x < piece.x + piece.w && other.x + other.w > piece.x) {
                     if (other.y < piece.y) { // Obstacle above
-                        topObstacleY = Math.max(topObstacleY, other.y);
+                        topEdgeBoundary = Math.max(topEdgeBoundary, other.y + other.h);
                     } else { // Obstacle below
-                        bottomObstacleY = Math.min(bottomObstacleY, other.y);
+                        bottomEdgeBoundary = Math.min(bottomEdgeBoundary, other.y);
                     }
                 }
             }
-            minBound = (topObstacleY - this.initialPieceY + 1) * cellHeight;
-            maxBound = (bottomObstacleY - (this.initialPieceY + piece.h)) * cellHeight;
+            minPixelBound = (topEdgeBoundary - piece.y) * cellHeight;
+            maxPixelBound = (bottomEdgeBoundary - (piece.y + piece.h)) * cellHeight;
         }
 
-        return { min: minBound, max: maxBound };
+        return { min: minPixelBound, max: maxPixelBound };
     }
 
     updateMoveCount() {
@@ -323,10 +361,20 @@ document.addEventListener('keydown', (e) => {
 });
 
 function switchScreen(screenId) {
-    ['menuScreen', 'difficultySelect', 'gameScreen', 'imageSelectScreen', 'challengeScreen', 'traditionalScreen'].forEach(id => {
-        document.getElementById(id).style.display = (id === screenId) ? 'block' : 'none';
+    const allScreens = ['menuScreen', 'difficultySelect', 'gameScreen', 'imageSelectScreen', 'challengeScreen', 'traditionalScreen'];
+    allScreens.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.style.display = 'none';
+        }
     });
+    
+    const targetScreen = document.getElementById(screenId);
+    if (targetScreen) {
+        targetScreen.style.display = 'flex';
+    }
 }
+
 
 function showMenu() {
     switchScreen('menuScreen');
@@ -387,8 +435,6 @@ function showInstructions() {
         用户上传图片的所有处理都在用户的浏览器内部完成。整个过程中，图片文件或其数据从未被上传到任何服务器。 它只是从用户的硬盘/相册进入了浏览器的内存，然后显示在屏幕上，数据不离设备 (最重要的安全保障)。
     </p>
 `;
-
-// 修正2：在调用 showMessage 时，第三个参数传 true，表示这是 HTML
 showMessage(htmlText, '游戏说明', true);  
 }
 
