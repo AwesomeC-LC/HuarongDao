@@ -457,7 +457,7 @@ function showWinModal({title, subtitle, stats, message = '', showNextBtn = false
 
 function showMessage(text, title = '提示', isHtml = false) { document.getElementById('messageTitle').textContent = title; const messageTextElement = document.getElementById('messageText'); if (isHtml) { messageTextElement.innerHTML = text; } else { messageTextElement.textContent = text; } document.getElementById('messageModal').style.display = 'flex'; }
 function closeMessageModal() { document.getElementById('messageModal').style.display = 'none'; }
-function closeWinModal() { document.getElementById('winModal').style.display = 'none'; showMenu(); }
+function closeWinModal() { document.getElementById('winModal').style.display = 'none'; }
 document.getElementById('soundToggle').addEventListener('click', function() { slidingPuzzleGame.soundEnabled = !slidingPuzzleGame.soundEnabled; this.querySelector('i').className = slidingPuzzleGame.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute'; });
 document.addEventListener('click', function(e) { if (e.target.classList.contains('modal')) { e.target.style.display = 'none'; } });
 document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
