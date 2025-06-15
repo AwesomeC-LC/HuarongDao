@@ -197,3 +197,22 @@ body {
     box-shadow: 0 0 15px #ff4500;
     z-index: 10;
 }
+/* --- New rules for image select screen controls --- */
+.image-select-controls {
+    display: flex;
+    gap: 15px; /* 控制两个按钮之间的间距 */
+    margin-top: 25px;
+    width: 100%;
+}
+
+.image-select-controls .upload-label {
+    flex: 1; /* 让上传按钮占据可用空间的一半 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px; /* 统一垂直内边距，使其与返回按钮高度一致 */
+}
+
+.image-select-controls .control-btn {
+    flex: 1; /* 让返回按钮也占据可用空间的一半 */
+}
